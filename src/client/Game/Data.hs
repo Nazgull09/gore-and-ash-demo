@@ -13,6 +13,7 @@ import qualified Data.HashMap.Strict as H
 import Game.Bullet.Data
 import Game.Camera 
 import Game.Player.Data 
+import Game.UI.Data
 
 import Game.GoreAndAsh.Actor 
 import Game.GoreAndAsh.Sync 
@@ -27,6 +28,7 @@ data Game = Game {
 , gamePlayers :: !PlayerMap
 , gameBullets :: !BulletMap
 , gameExit :: !Bool
+, gameUI :: !UI
 } deriving (Generic)
 
 instance NFData Game 

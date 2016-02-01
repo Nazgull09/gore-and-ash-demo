@@ -3,6 +3,7 @@ module Game(
     mainWire
   , Player(..)
   , Camera(..)
+  , UI(..)
   , Game(..)
   , AppMonad
   ) where
@@ -13,6 +14,8 @@ import Data.Text (pack)
 import Prelude hiding (id, (.))
 import qualified Data.HashMap.Strict as H 
 import qualified Data.Sequence as S 
+
+import Linear
 
 import Game.GoreAndAsh
 import Game.GoreAndAsh.Actor 
@@ -27,6 +30,7 @@ import Game.Camera
 import Game.Core
 import Game.Data
 import Game.Player
+import Game.UI
 import Game.Shared
 
 -- | Entry point of the game, controls global game stages
@@ -73,6 +77,7 @@ mainWire = waitConnection
 playGame :: PlayerId -> Peer -> RemActorCollId -> RemActorCollId -> AppActor GameId a (Maybe Game)
 playGame pid peer bulletsColId playersColId = makeFixedActor globalGameId $ stateWire Nothing $ proc (_, mg) -> do 
   c <- runActor' $ cameraWire initialCamera -< ()
+  ui <- runActor' $ uiActor initUI -< ()
   ex <- exitCheck -< ()
   (ps, bs) <- case mg of 
     Nothing -> returnA -< (H.empty, H.empty)
@@ -88,6 +93,7 @@ playGame pid peer bulletsColId playersColId = makeFixedActor globalGameId $ stat
       , gameCamera = c
       , gamePlayers = ps
       , gameBullets = bs
+      , gameUI = ui
       , gameExit = ex
       }
     Just g -> g {
@@ -95,6 +101,7 @@ playGame pid peer bulletsColId playersColId = makeFixedActor globalGameId $ stat
       , gameCamera = c
       , gamePlayers = ps
       , gameBullets = bs
+      , gameUI = ui
       , gameExit = ex
       }
   where
@@ -122,3 +129,12 @@ playGame pid peer bulletsColId playersColId = makeFixedActor globalGameId $ stat
   processBullets cid = proc g -> do 
     bs <- runActor' $ remoteActorCollectionClient cid peer (bulletActor peer) -< g
     returnA -< mapFromSeq $ fmap bulletId bs `S.zip` bs
+
+  -- | Maker of startup UI
+  initUI :: UIId -> UI
+  initUI i = UI{
+      uiId = i
+    , uiPos = V2 (-1) (-0.8)
+    , uiColor = 0
+    , uiSize = 0.3
+    }
